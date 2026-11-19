@@ -1,0 +1,47 @@
+{
+  "version": 2,
+  "skills": {
+    "Statistical Hypothesis Testing": {
+      "source": "aj-geddes/useful-ai-prompts",
+      "commit": "3f5182cfd739fc113f4af5244a1cf342ad7f7911",
+      "sourceType": "github",
+      "skillPath": "skills/statistical-hypothesis-testing/SKILL.md",
+      "computedHash": "ecc5319b2cc33ac8aae88eb3fd06d406f7f54f789989d52c177f9ac4b3a6bedd"
+    },
+    "academic-paper-reviewer": {
+      "source": "Imbad0202/academic-research-skills",
+      "commit": "23807f987024f2e038d12fd9e4e5d2a7cc228674",
+      "sourceType": "github",
+      "skillPath": "academic-paper-reviewer/SKILL.md",
+      "computedHash": "f2dbbce5e47ecc78b70eb5aa00fd436d307d81b43eeb265b94f32f238fed1dce"
+    },
+    "academic-writing": {
+      "source": "jamditis/claude-skills-journalism",
+      "commit": "a6383bd0c4cb22cc04056875f4d50603489b003b",
+      "sourceType": "github",
+      "skillPath": "research-toolkit/skills/academic-writing/SKILL.md",
+      "computedHash": "a94833ad79a81dc7646e7f8cfad5bde308c7f8ff812f4f328f01dc5658d1021b"
+    },
+    "pandas-best-practices": {
+      "source": "Mindrally/skills",
+      "commit": "7682ca77710e0971eab4e0ae5dddfa281aea0ba5",
+      "sourceType": "github",
+      "skillPath": "pandas-best-practices/SKILL.md",
+      "computedHash": "3fe943fb5f382410ec506e0b69d1578a1078f197edd5a7c577b83dde40af449a"
+    },
+    "scientific-visualization": {
+      "source": "K-Dense-AI/scientific-agent-skills",
+      "commit": "ec59a29a03d5c40f73ab40878df04860bc00e876",
+      "sourceType": "github",
+      "skillPath": "skills/scientific-visualization/SKILL.md",
+      "computedHash": "a9ea119baafe77128193200a93acf35f56ce8c52038253a4bcef4f0da41e7e70"
+    },
+    "statistical-analysis": {
+      "source": "anthropics/knowledge-work-plugins",
+      "commit": "b4c9a4e1de4b42868b74a6fe30ac766f64e43a3e",
+      "sourceType": "github",
+      "skillPath": "data/skills/statistical-analysis/SKILL.md",
+      "computedHash": "4242cec3fbadc3d0621935c2d2c31546320aa8447059d529df61b7ceb7fb849d"
+    }
+  }
+}

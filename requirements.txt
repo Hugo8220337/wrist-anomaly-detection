@@ -1,0 +1,28 @@
+numpy
+pandas
+Jinja2
+matplotlib
+seaborn
+ipykernel
+
+openpyxl # To be able to read Excel files, if needed
+
+# Used for the COF
+pyod
+
+kneed # For Elbow Method in clustering
+
+# For Time Series
+tslearn # Focused on time series machine learning
+sktime # Focused on time series analysis and forecasting
+
+# I don't want to wait for things to copute again every time I restart my kernel
+joblib
+
+# I want Progress Bars
+tqdm
+
+# For DTW matrix proffiling
+stumpy
+
+optuna # For Bayesian Optimization
