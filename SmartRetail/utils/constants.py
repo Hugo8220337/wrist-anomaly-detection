@@ -4,6 +4,19 @@ from pathlib import Path
 
 @dataclass
 class Configs:
+    @dataclass(frozen=True)
+    class Experiment:
+        exp_id: str      # "E1", "E2", "E3"
+        input_: str      # "R_wrist", "both_max", "both_mean"
+        gt_key: str      # "R", "L", "OR"
+        dtw_loader: str  # nome do loader de matrizes
+
+    EXPERIMENTS = [
+        Experiment("E1", "R_wrist",  "R",  "right_wrist"),
+        Experiment("E2", "both_max", "R",  "late_fusion"),
+        Experiment("E3", "both_max", "OR", "late_fusion"),
+    ]
+
     FEATURE_COLS = ['duration', 'range_x_L', 'range_y_L', 'range_z_L', 'path_length_L', 'path_ratio_L', 'mean_vel_L', 'max_vel_L', 'time_to_peak_vel_L', 'mean_to_peak_vel_ratio_L', 'vel_skewness_L', 'n_velocity_peaks_L', 'mean_acc_L', 'max_acc_L', 'max_jerk_L', 'ldlj_L', 'sparc_L', 'total_curvature_L', 'total_torsion_L', 'range_x_R', 'range_y_R', 'range_z_R', 'path_length_R', 'path_ratio_R', 'mean_vel_R', 'max_vel_R', 'time_to_peak_vel_R', 'mean_to_peak_vel_ratio_R', 'vel_skewness_R', 'n_velocity_peaks_R', 'mean_acc_R', 'max_acc_R', 'max_jerk_R', 'ldlj_R', 'sparc_R', 'total_curvature_R', 'total_torsion_R', 'wrist_dist_mean', 'wrist_dist_min', 'wrist_dist_max', 'wrist_dist_std', 'peak_time_diff', 'vel_corr_LR']
     KEYS = ['sub', 'repID', 'movID']
     META_COLS = ['sub', 'repID', 'movID', 'movLabel']
@@ -24,7 +37,7 @@ class Configs:
     SAVE_PLOTS = True
     DESKTOP_PATH = Path.home() / "Desktop"
     
-    BASE_DIR = Path(__file__).resolve().parent.parent.parent.parent
+    BASE_DIR = Path(__file__).resolve().parent.parent.parent
     SMART_RETAIL_BASE_DIR = Path(__file__).resolve().parent.parent
     SMART_RETAIL_DTW_BASE_DIR = (SMART_RETAIL_BASE_DIR / "SmartRetail_DTW").resolve()
     
@@ -42,6 +55,7 @@ class Configs:
     _cache_metadata_dir = (_cache_dir / "metadata").resolve()
     _cache_models_dir = (_cache_dir / "models").resolve()
     _loso_results_cache_dir = (_cache_metadata_dir / "loso_results").resolve()
+    _print_log_dir = (_cache_metadata_dir / "print_logs").resolve()
         
     _smart_retail_data_path = (BASE_DIR / "Data" / "SmartRetail").resolve()
     _smart_reatail_outliers_path = (_smart_retail_data_path / "outliers").resolve()
@@ -59,13 +73,16 @@ class Configs:
 
     
     @staticmethod
-    def loso_results_path(model_name: str, representation: str, movement: str) -> Path:
-        return (Configs._loso_results_cache_dir / f"wrist_only_loso_results_{model_name}_{representation}_{movement}.pkl").resolve()
+    def loso_results_path(model_name: str, representation: str, experiment_name: str, movement: str) -> Path:
+        return (Configs._loso_results_cache_dir / f"wrist_only_loso_results_{model_name}_{representation}_{experiment_name}_{movement}.pkl").resolve()
 
     @staticmethod
     def loso_model_summary_path(representation: str, gt_Key: str) -> Path:
         return (Configs._smart_retail_dtw_processed_data_dir / f"loso_model_summary_{representation}_GT{gt_Key}.csv").resolve()
 
+    @staticmethod
+    def print_log_path(model_name: str, representation: str, movement: str) -> Path:
+        return (Configs._print_log_dir / f"wrist_only_loso_results_{model_name}_{representation}_{movement}.log").resolve()
 
 
     @staticmethod
@@ -144,6 +161,7 @@ class Configs:
             Configs._cache_metadata_dir,
             Configs._cache_models_dir,
             Configs._loso_results_cache_dir,
+            Configs._print_log_dir,
             Configs._wrist_only_feature_extraction_cache_dir
         ]
 

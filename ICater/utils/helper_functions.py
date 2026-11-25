@@ -196,12 +196,6 @@ def append_experiment_record(
         if mcc is None or (isinstance(mcc, float) and np.isnan(mcc)):
             mcc = "N/A"
 
-        prec_ci = ci.get(f'{level_name}_precision', (level_summary['Precision'], None, None))
-        rec_ci = ci.get(f'{level_name}_recall', (level_summary['Recall'], None, None))
-        f2_ci = ci.get(f'{level_name}_f2', (level_summary['F2-Score'], None, None))
-        auprc_ci = ci.get(f'{level_name}_auprc', (level_summary.get('AUPRC', np.nan), None, None))
-        mcc_ci = ci.get(f'{level_name}_mcc', (level_summary['MCC'], None, None))
- 
         records.append({
             'Algorithm': algorithm, 'Representation': representation,
             'Movement Phase': phase, 'Level': level_name,

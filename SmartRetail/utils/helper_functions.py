@@ -1,4 +1,6 @@
 import os
+import sys
+from contextlib import redirect_stdout # redirect print statements to a file
 
 import joblib
 import pandas as pd
@@ -9,6 +11,27 @@ from tslearn.utils import to_time_series_dataset
 from tslearn.preprocessing import TimeSeriesScalerMeanVariance
 
 from utils.constants import Configs
+
+
+class _PrintLog:
+    def __init__(self, *streams):
+        self.streams = streams
+
+    def write(self, text):
+        """
+        Writes the text to all streams (console and log file).
+        This ensures that all output is written to the log file and console in real-time.
+        """
+        for stream in self.streams:
+            stream.write(text)
+        return len(text)
+
+    def flush(self):
+        """Flushes the streams. 
+        This ensures that all output is written to the log file and console in real-time.
+        """
+        for stream in self.streams:
+            stream.flush()
 
 
 def normalize_series(
@@ -111,12 +134,14 @@ def calculate_matrix_trash_percentage(outlier_indices, metadata_df):
     return n_unique, trash_pct
 
 
-def save_loso_results(model_name, representation, target_movement, loso_results):
+
+def save_loso_results(model_name, representation, experiment_name, target_movement, loso_results):
     """
     Extracts fold history from loso_results and saves it to a DataFrame, then saves the entire loso_results object to disk using joblib.
     args:
         model_name: name of the model (e.g., 'OCSVM', 'IsolationForest')
         representation: representation used (e.g., 'features', 'DTW_matrix')
+        experiment_name: the name of the experiment (e.g., 'R_wrist__R', 'max__R')
         target_movement: the movement for which results are being saved
         loso_results: the results from the LOSO evaluation
     """
@@ -126,8 +151,9 @@ def save_loso_results(model_name, representation, target_movement, loso_results)
     fold_results['Model'] = model_name
     fold_results['Representation'] = representation
     fold_results['Phase'] = target_movement
+    fold_results['Experiment'] = experiment_name
 
-    file_path = Configs.loso_results_path(model_name, representation, target_movement)
+    file_path = Configs.loso_results_path(model_name, representation, experiment_name, target_movement)
     joblib.dump(loso_results, file_path)
 
 def _fmt_point_ci(point, low, upp, scale=100):
@@ -149,11 +175,11 @@ def _metric_cell(level_summary, ci, level_name, summary_key, ci_key, scale=100):
     _, low, upp = ci.get(f'{level_name}_{ci_key}', (None, None, None))
     return _fmt_point_ci(level_summary.get(summary_key), low, upp, scale)
 
-def _print_level_block(level_name, phase, representation, algorithm, level_summary, ci):
+def _print_level_block(level_name, phase, representation, experiment_name, algorithm, level_summary, ci):
     total = level_summary['N_Total']
     label = "Trials" if level_name == 'trial' else "Movements"
  
-    print(f"\n✅ Experiment Summary for {algorithm} - {representation} - {phase} - {total} {label} ({level_name.upper()}-level):")
+    print(f"\n✅ Experiment Summary for {algorithm} - {representation} - {phase} - {experiment_name}- {total} {label} ({level_name.upper()}-level):")
     print(f"Unique Outliers Detected: {level_summary['N_Rejected']}")
     print(f"Rejection Rate: {level_summary['Rejection_Rate']:.2f}%")
     print(f"Known Positives in Ground Truth: {level_summary['N_Known_Positives']}")
@@ -180,11 +206,11 @@ def _print_level_block(level_name, phase, representation, algorithm, level_summa
         print("Blind AUPRC:     N/A (detector has no continuous score_blind, or no known positives)")
         print("Blind AUROC:     N/A")
 
- 
 def append_experiment_record(
     summary_path: str,
     phase: str,
     representation: str,
+    experiment_name: str,
     algorithm: str,
     total_samples: int,
     loso_results: dict,
@@ -195,6 +221,7 @@ def append_experiment_record(
     prints a detailed summary for each level. Called ONCE per
     experiment -- no need to repeat for trial.
     """
+
     ci = bootstrap_results or {}
  
     records = []
@@ -206,15 +233,9 @@ def append_experiment_record(
         if mcc is None or (isinstance(mcc, float) and np.isnan(mcc)):
             mcc = "N/A"
 
-        prec_ci = ci.get(f'{level_name}_precision', (level_summary['Precision'], None, None))
-        rec_ci = ci.get(f'{level_name}_recall', (level_summary['Recall'], None, None))
-        f2_ci = ci.get(f'{level_name}_f2', (level_summary['F2-Score'], None, None))
-        auprc_ci = ci.get(f'{level_name}_auprc', (level_summary.get('AUPRC', np.nan), None, None))
-        mcc_ci = ci.get(f'{level_name}_mcc', (level_summary['MCC'], None, None))
- 
         records.append({
             'Algorithm': algorithm, 'Representation': representation,
-            'Movement Phase': phase, 'Level': level_name,
+            'Experiment': experiment_name, 'Movement Phase': phase, 'Level': level_name,
             'Num. Observations': level_summary['N_Total'],
             'N° Known Positives': level_summary['N_Known_Positives'],
             'N° Rejected': level_summary['N_Rejected'],
@@ -253,13 +274,18 @@ def append_experiment_record(
  
     summary_df.to_csv(summary_path, index=False)
  
-    # --- Print detalhado, por nível ---
-    for level_name, level_summary in [('movement', loso_results['Movement']), ('trial', loso_results.get('Trial'))]:
-        if level_summary is None:
-            continue
-        _print_level_block(level_name, phase, representation, algorithm, level_summary, ci)
- 
-    print(f"\nTotal Tuning Time (19 Subjects): {loso_results['Tunning_Time']:.4f}s")
-    print(f"Total Inference Time (19 Subjects): {loso_results['Inference_Time']:.4f}s")
-    print(f"\nOverall Best Parameters (Most frequent across folds):\n   {loso_results['Best_Params']}")
-    print(f"Occurrences: {loso_results['Best_Params_Count']}")
+    print_log_path = Configs.print_log_path(algorithm, representation, phase)
+
+    # Print to Console and save all print output to a log file
+    with open(print_log_path, "a", encoding="utf-8") as log_file:
+        with redirect_stdout(_PrintLog(sys.stdout, log_file)):
+            # --- Detailed Printing, by Level ---
+            for level_name, level_summary in [('movement', loso_results['Movement']), ('trial', loso_results.get('Trial'))]:
+                if level_summary is None:
+                    continue
+                _print_level_block(level_name, phase, representation, experiment_name, algorithm, level_summary, ci)
+
+            print(f"\nTotal Tuning Time (19 Subjects): {loso_results['Tunning_Time']:.4f}s")
+            print(f"Total Inference Time (19 Subjects): {loso_results['Inference_Time']:.4f}s")
+            print(f"\nOverall Best Parameters (Most frequent across folds):\n   {loso_results['Best_Params']}")
+            print(f"Occurrences: {loso_results['Best_Params_Count']}")
